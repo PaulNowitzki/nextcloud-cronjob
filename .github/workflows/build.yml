@@ -1,6 +1,9 @@
 name: build
 
-on: [push, pull_request]
+on:
+  push:
+    tags:
+      - "*"
 
 jobs:
   build:
@@ -20,8 +23,8 @@ jobs:
         uses: docker/login-action@v3
         if: github.ref == 'refs/heads/master'
         with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
       -
         name: Docker Build & Push
         uses: docker/build-push-action@v3
@@ -29,12 +32,14 @@ jobs:
           # Only publish new images when building the master branch
           push: ${{ github.ref == 'refs/heads/master' }}
           platforms: linux/amd64,linux/arm64
-          tags: rcdailey/nextcloud-cronjob:latest
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/nextcloud-cronjob:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/nextcloud-cronjob:${GITHUB_REF#refs/tags/}
       -
         name: Update Repository Description
         uses: peter-evans/dockerhub-description@v3
         if: github.ref == 'refs/heads/master'
         env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
-          DOCKERHUB_PASSWORD: ${{ secrets.DOCKER_HUB_PASSWORD }}
-          DOCKERHUB_REPOSITORY: rcdailey/nextcloud-cronjob
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
+          DOCKERHUB_REPOSITORY: ${{ secrets.DOCKERHUB_USERNAME }}/nextcloud-cronjob
